@@ -1,0 +1,48 @@
+postgresql:
+  image: sameersbn/postgresql:latest
+  environment:
+    - DB_USER=gitlab
+    - DB_PASS=mydbpassword
+    - DB_NAME=gitlabhq_production
+  volumes:
+    - /opt/isep-devops/ci/gitlab/pg:/var/lib/postgresql
+  ports:
+    - "5432:5432"
+redis:
+  image: sameersbn/redis:latest
+  volumes:
+    - /opt/isep-devops/ci/gitlab/redis:/var/lib/redis
+gitlab:
+  image: sameersbn/gitlab:latest
+  ports:
+    - "0.0.0.0:800:80"
+    - "0.0.0.0:10022:22"
+  environment:
+    - GITLAB_SECRETS_DB_KEY_BASE=nDtF83ZrDRv7rSChMN5KDKZjCZn5VmK2lF88Wf2cNNs37qRKX4tMrKgJTw55htGw
+    - GITLAB_SECRETS_OTP_KEY_BASE=6QnhNnPBxvQ9crH4wVcgmCR2xPPCNTqWgGsGDQs3qdVhW5QHFjrQ9vjtnVtxdL7Q
+    - GITLAB_SECRETS_SECRET_KEY_BASE=sJZ4Qvv9bVl8SWRj5Tj5VbnWdrDg3FjpJn9P2mdVCX3SdzpZl4dqjZMM2sHjwZV2
+    - GITLAB_BACKUPS=daily
+    - MAX_UPLOAD_SIZE=512m
+    - GITLAB_HTTPS=false
+    - DB_USER=gitlab
+    - DB_PASS=mydbpassword
+    - DB_NAME=gitlabhq_production
+  volumes:
+    - /opt/isep-devops/ci/gitlab/data:/home/git/data
+  links:
+   - redis:redisio
+   - postgresql:postgresql
+jenkins:
+  ports:
+    - "8080:8080"
+  volumes:
+    - /opt/isep-devops/ci/jenkins:/var/jenkins_home
+  image: jenkins:latest
+  links:
+    - gitlab:gitlab
+nexus:
+  ports:
+    - "8081:8081"
+  image: sonatype/nexus
+  volumes:
+    - /opt/isep-devops/ci/nexus:/sonatype-work
